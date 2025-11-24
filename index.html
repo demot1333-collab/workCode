@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Polaroid Love Wall</title>
+<style>
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #fdf6f9;
+  overflow-x: hidden;
+  text-align: center;
+  transition: background 0.5s, color 0.5s;
+}
+h1 { margin: 20px 0; color: #d6336c; }
+
+/* Gallery */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* 4 photos per row */
+  column-gap: 5px; /* photos ke beech ka gap */
+  row-gap: 30px;    /* row ke beech ka extra gap */
+  padding: 20px;
+  justify-items: center;
+}
+
+/* Responsive */
+@media(max-width: 900px) {
+  .gallery { grid-template-columns: repeat(2, 1fr); column-gap: 8px; row-gap: 20px; }
+}
+@media(max-width: 500px) {
+  .gallery { grid-template-columns: 1fr; column-gap: 5px; row-gap: 15px; }
+}
+
+/* Polaroid Card */
+.polaroid { perspective: 1500px; }
+
+.polaroid-inner {
+  width: 220px;
+  height: 280px;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  position: relative;
+}
+
+.polaroid:hover .polaroid-inner { transform: rotateY(180deg); }
+
+.polaroid-front, .polaroid-back {
+  position: absolute;
+  top:0; left:0;
+  width: 100%; height: 100%;
+  backface-visibility: hidden;
+  border: 10px solid #fff;
+  box-shadow: 0 8px 12px rgba(0,0,0,0.3);
+  border-radius: 12px;
+}
+
+.polaroid-front img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+
+.caption {
+  position: absolute;
+  bottom: 8px;
+  width: 100%;
+  background: rgba(255,255,255,0.9);
+  color: #d6336c;
+  font-weight: bold;
+  padding: 4px;
+  border-radius: 0 0 12px 12px;
+  text-align: center;
+}
+
+.polaroid-back {
+  transform: rotateY(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #d6336c;
+  background: #fff0f6;
+  padding: 12px;
+  text-align: center;
+  border-radius: 12px;
+}
+
+/* Floating hearts */
+.heart {
+  position: fixed;
+  color: #ff69b4;
+  font-size: 10px;
+  animation: floatHeart 6s linear infinite;
+  bottom: -10px;
+}
+@keyframes floatHeart {
+  0% { transform: translateY(0) scale(0.8); opacity: 1; }
+  50% { transform: translateY(-50vh) scale(1.2); opacity: 0.8; }
+  100% { transform: translateY(-120vh) scale(1); opacity: 0; }
+}
+
+/* Buttons */
+.controls {
+  margin: 20px;
+}
+button {
+  padding: 8px 14px;
+  margin: 5px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #d6336c;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Night mode */
+.night { background: #000 !important; color: #000; }
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top:0; left:0;
+  width: 100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 400px;
+}
+
+/* Playlist */
+.playlist {
+  margin: 30px;
+  background: #fff0f6;
+  padding: 20px;
+  border-radius: 12px;
+  display: inline-block;
+}
+.playlist h3 { color: #d6336c; margin-bottom: 10px; }
+.playlist-controls button { margin: 5px; }
+</style>
+</head>
+<body>
+
+<h1>💖 Our Polaroid Love Wall 💖</h1>
+
+<div class="controls">
+  <button onclick="toggleNight()">🌙 Chalo Night Mode me Kho Jaayein</button>
+<button onclick="shuffle()">💞 Humari Yaadon Ko Mix Karein</button>
+<button onclick="showModal()">💌 Ek Chhupa Hua Pyar Bhara Note</button>
+
+</div>
+
+<audio id="bgMusic" loop>
+  <source src="https://www.bensound.com/bensound-music/bensound-romantic.mp3" type="audio/mpeg">
+</audio>
+
+<div class="gallery" id="gallery"></div>
+
+<!-- Playlist Section -->
+<div class="playlist">
+  <h3>🎵 Your Playlist</h3>
+  <p id="currentSong">Song: </p>
+  <div class="playlist-controls">
+    <button onclick="prevSong()">⏮️ Previous</button>
+    <button onclick="togglePlaylist()">▶️ Play/Pause</button>
+    <button onclick="nextSong()">⏭️ Next</button>
+  </div>
+  <audio id="playlistAudio"></audio>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>💌 Surprise for You 💌</h3>
+    <p>Sakshi, tu meri life ka wo part hein jo mere sapno se bhi sundar hein ❤️</p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+    
+// Check login at start
+if(localStorage.getItem("loggedIn") !== "true") {
+  window.location.href = "login.html"; // redirect to login page if not logged in
+}
+
+
+const photos = [
+  {src:"images/1.jpeg", front:"cute smile 😍😊", back:"Please ese hi haste raha kar na 💕🥰"},
+  {src:"images/2.jpeg", front:"Sharmili 😘😳", back:"Kitni mast lagti hein sharmati hui🌹🥰"},
+  {src:"images/3.jpeg", front:"Simplicity 😘😇", back:"Kabhi kabhi na simple bhi mast hota hein or tu to mast hi hein🌹✨"},
+  {src:"images/4.jpeg", front:"College ki cutie 😘🎓", back:"Khash college me hi mil gaye hote yaar🌹💖"},
+  {src:"images/5.jpeg", front:"Open hires 😘💃", back:"Khule baal me na tu ekdam patakha lagti hein🌹🎆"},
+  {src:"images/6.jpeg", front:"Marathi mulgi 😘🌸", back:"Bohot sundar lagti hein sakshi tu ese bindi and all mein🌹💖"},
+  {src:"images/7.jpeg", front:"Sweetuu 😘💞", back:"First move aapni or ye meri one of the favourite pick hein🌹❤️"},
+  {src:"images/8.jpeg", front:"Sundari 😘🌷", back:"flowers se jayda sundar ho aap 🌹💖"},
+  {src:"images/9.jpeg", front:"Chhota sa tohfa 😘🎁", back:"Tujhe yaad aaye na meri to please ye dekh lena shyad acha lage🌹✨"},
+  {src:"images/10.jpeg", front:"Preety 😘💖", back:"Sundar si ek ladki 🌹😊"},
+  {src:"images/11.jpeg", front:"Happiness 😘😊", back:"You are my source of happiness🌹💞"},
+  {src:"images/12.jpeg", front:"cute moment😘💖", back:"Yaar sath me ache to lagte hein aapan dono 🌹😊"},
+  {src:"images/13.jpeg", front:"Holding hands 😘🤝", back:"One of the special day🌹💞"},
+  {src:"images/14.jpeg", front:"Random one 😘😇", back:"Random me bhi meri wali sundar hi hein 🌹✨"},
+  {src:"images/15.jpeg", front:"Princess 😘👑", back:"Tu kuch bhi bol but tu bohot sundar hein 🌹💖"},
+  {src:"images/16.jpeg", front:"Rasmalai 😘🍮", back:"Isme to tu na ekdam apsara lag rahi hein🌹😊"},
+  {src:"images/17.jpeg", front:"Starting😘🌸", back:"Ye meri life ka first moment tha jo tune diya to feel special🌹💖"},
+  {src:"images/18.jpeg", front:"First hug 😘🤗", back:"Ye aapni first hug thi sakshi special hein ye 🌹💞"},
+  {src:"images/19.jpeg", front:"First drive 😘🚗", back:"First drive togther kitna mast tha na wo din bhi🌹💖"},
+  {src:"images/20.jpeg", front:"Happy together 😘💑", back:"Apan kitne happy hote hein na sath mein 🌹💞"},
+  {src:"images/21.jpeg", front:"Mirror 😘🪞", back:"Random click ki thi but sundar lagti hein mujhe ye bhi 🌹✨"},
+  {src:"images/22.jpeg", front:"Small thing😘🌹", back:"mujhe rose dena pasand hein wo alag baat hein ki tujhe sambhal na padta hein🌸💖"},
+  {src:"images/23.jpeg", front:"Starting😘🌷", back:"towards happiness my cuite 🌹💞"},
+  {src:"images/24.jpeg", front:"Meri pyaari😘❤️", back:"Thoda sa idhar mujhe bhi dekh lo miss 🌹💖"},
+  {src:"images/25.jpeg", front:"Notanki together😘😂", back:"Mast to lag raha hein ye notanki🌹💞"},
+  {src:"images/26.jpeg", front:"my life😘🌸", back:"One of the special day with special one 🌹💖"},
+  {src:"images/28.jpeg", front:"kiti chan😘🎀", back:"mast lagti hein tu hair belt mein 🌹✨"}
+];
+
+
+const gallery = document.getElementById("gallery");
+gallery.innerHTML = "";
+photos.forEach(photo => {
+  const div = document.createElement("div");
+  div.className = "polaroid";
+  div.innerHTML = `
+    <div class="polaroid-inner">
+      <div class="polaroid-front">
+        <img src="${photo.src}" alt="photo">
+        <div class="caption">${photo.front}</div>
+      </div>
+      <div class="polaroid-back">${photo.back}</div>
+    </div>
+  `;
+  gallery.appendChild(div);
+});
+
+// Floating hearts
+setInterval(() => {
+  const heart = document.createElement("div");
+  heart.className = "heart";
+  heart.innerHTML = "🥰";
+  heart.style.left = Math.random()*100+"vw";
+  heart.style.fontSize = (Math.random()*20 + 10) + "px";
+  document.body.appendChild(heart);
+  setTimeout(()=>heart.remove(), 6000);
+}, 400);
+
+// Music toggle
+function toggleMusic() {
+  const music = document.getElementById("bgMusic");
+  if(music.paused) music.play(); else music.pause();
+}
+
+// Night mode
+function toggleNight() { document.body.classList.toggle("night"); }
+
+// Shuffle
+function shuffle() {
+  for (let i = gallery.children.length; i >= 0; i--) {
+    gallery.appendChild(gallery.children[Math.random() * i | 0]);
+  }
+}
+
+// Modal
+function showModal() { document.getElementById("modal").style.display="flex"; }
+function closeModal() { document.getElementById("modal").style.display="none"; }
+
+// Playlist
+const playlist = [  
+  "music/3.mp3",
+  "music/1.mp3",
+  "music/2.mp3",
+  "music/4.mp3",
+  "music/5.mp3",
+  "music/6.mp3",
+  "music/7.mp3",
+  "music/8.mp3"
+];
+let currentIndex = 0;
+const playlistAudio = document.getElementById("playlistAudio");
+const currentSongLabel = document.getElementById("currentSong");
+
+function loadSong() {
+  playlistAudio.src = playlist[currentIndex];
+  currentSongLabel.innerText = "Song: " + playlist[currentIndex].split('/').pop();
+  playlistAudio.play();
+}
+
+function togglePlaylist() {
+  if(playlistAudio.paused) playlistAudio.play();
+  else playlistAudio.pause();
+}
+
+function nextSong() {
+  currentIndex = (currentIndex + 1) % playlist.length;
+  loadSong();
+}
+
+function prevSong() {
+  currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+  loadSong();
+}
+
+// Start first song
+loadSong();
+</script>
+
+</body>
+</html>

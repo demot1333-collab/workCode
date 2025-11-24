@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>💖 Romantic Login 💖</title>
+<style>
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #fdf6f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+}
+
+h1 { color: #d6336c; margin-bottom: 20px; }
+
+.login-container {
+  background: #fff0f6;
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+  text-align: center;
+  width: 320px;
+}
+
+input[type="text"], input[type="password"] {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 12px;
+  border: 1px solid #d6336c;
+  outline: none;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #d6336c;
+  color: #fff;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<h1>💌 Romantic Login 💌</h1>
+
+<div class="login-container">
+  <input type="text" id="username" placeholder="Username" />
+  <input type="password" id="password" placeholder="Password" />
+  <br>
+  <button onclick="login()">Login</button>
+  <div class="error" id="error">Galat hein ye phir try kar</div>
+</div>
+
+<script>
+function login() {
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+  const error = document.getElementById("error");
+
+  if(user === "mine" && pass === "rasmalai") {
+    // Successful login: store flag in localStorage
+    localStorage.setItem("loggedIn", "true");
+    window.location.href = "index.html"; // redirect to Polaroid Love Wall
+  } else {
+    error.style.display = "block";
+  }
+}
+</script>
+
+</body>
+</html>
